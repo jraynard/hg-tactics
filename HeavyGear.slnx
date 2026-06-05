@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HeavyGear.Core/HeavyGear.Core.csproj" />
+    <Project Path="src/HeavyGear.Desktop/HeavyGear.Desktop.csproj" />
+  </Folder>
+</Solution>

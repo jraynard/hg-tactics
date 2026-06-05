@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>HeavyGear</AssemblyName>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4.1" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <MonoGameContentReference Include="$(MSBuildThisFileDirectory)/../../Content/Content.mgcb" />
+  </ItemGroup>
+
+  <!-- Map XML files are not XNA content — copy them as raw files to the output Content/Maps/ directory -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)/../../Content/Maps/DesertConflict.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Content/Maps/DesertConflict.xml</Link>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)/../../Content/Maps/Oasis.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Content/Maps/Oasis.xml</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HeavyGear.Core\HeavyGear.Core.csproj" />
+  </ItemGroup>
+
+</Project>

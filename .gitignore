@@ -1,0 +1,36 @@
+# .NET build output
+bin/
+obj/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# MonoGame content pipeline intermediate & output
+Content/bin/
+Content/obj/
+
+# dotnet local tool cache (restore with: dotnet tool restore)
+.store/
+
+# User-specific VS / Rider / VS Code files
+.vs/
+.vscode/settings.json
+.vscode/launch.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+Log.txt
+
+# Test results
+TestResults/
