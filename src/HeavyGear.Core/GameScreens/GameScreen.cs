@@ -68,6 +68,7 @@ namespace HeavyGear.GameScreens
             "Move the unit",
             "Attack a target unit within line of sight",
             "Observes a target within LOS for indirect or guided weapon fire",
+            "Attempt to recover squad morale",
             "End your side's turn"
         };
 
@@ -79,6 +80,7 @@ namespace HeavyGear.GameScreens
             "Acquire a target using active sensors",
             "Shift from Combat Speed to Top Speed or vice versa",
             "Activate/Deactivate active sensors for this unit",
+            "Attempt to recover squad morale",
             "End your side's turn"
         };
 
