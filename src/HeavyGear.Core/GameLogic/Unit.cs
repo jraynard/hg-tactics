@@ -1055,13 +1055,16 @@ namespace HeavyGear.GameLogic
             #region Collistion check
             //Check if destination is already occupied by another unit
             bool occupied = false;
-            for (int i = 0; i < HeavyGearManager.NumberOfPlayers; i++)
+            for (int i = 0; i < HeavyGearManager.NumberOfPlayers && !occupied; i++)
             {
                 Player player = HeavyGearManager.Player(i);
                 foreach (Unit unit in player.Units)
                 {
                     if (unit.simulationState.MapPosition == destination)
+                    {
                         occupied = true;
+                        break;
+                    }
                 }
             }
             if (occupied)
@@ -1210,79 +1213,40 @@ namespace HeavyGear.GameLogic
         /// <returns>0 for front, -1 for rear flank, -2 for rear</returns>
         public int CheckDefenseArc(float facing, Point attackerPosition, Point targetPosition)
         {
-            int targetFacing = (int)Math.Round(MathHelper.ToDegrees(facing));
+            // Convert hex positions to pixel space for geometrically accurate bearing.
+            Vector2 attackerPixel, defenderPixel;
+            BaseGame.ConvertMapToPixel(attackerPosition.X, attackerPosition.Y, out attackerPixel);
+            BaseGame.ConvertMapToPixel(targetPosition.X, targetPosition.Y, out defenderPixel);
 
-            int dY = targetPosition.Y - attackerPosition.Y;
-            int dX = targetPosition.X - attackerPosition.X;
+            float dx = attackerPixel.X - defenderPixel.X;
+            float dy = attackerPixel.Y - defenderPixel.Y; // positive = attacker is below defender on screen
 
-            if (targetPosition.X == attackerPosition.X)
-            {
-                //in a vertical line with target
-                if (targetPosition.Y < attackerPosition.Y)
-                {
-                    if (targetFacing == FacingInt.North)
-                        return -2;
+            // Identical position — treat as front arc.
+            if (dx == 0 && dy == 0)
+                return 0;
 
-                    if (targetFacing == FacingInt.NorthEast || targetFacing == FacingInt.NorthWest)
-                        return -1;
-                }
-                else if (targetPosition.Y > attackerPosition.Y)
-                {
-                    if (targetFacing == FacingInt.South)
-                        return -2;
+            // Compass bearing from defender toward attacker (North=0°, clockwise: East=90°, South=180°, West=270°).
+            float compassBearing = MathHelper.ToDegrees((float)Math.Atan2(dx, -dy));
+            compassBearing = ((compassBearing % 360) + 360) % 360;
 
-                    if (targetFacing == FacingInt.SouthEast || targetFacing == FacingInt.SouthWest)
-                        return -1;
-                }
-            }
+            // Convert to game-degree convention (South=0°, West=90°, North=180°, East=270°).
+            float bearingGameDeg = (compassBearing + 180.0f) % 360.0f;
 
-            if (targetPosition.X - attackerPosition.X > 0)
-            {
-                //target is to the right of attacker
-                if (targetPosition.Y < attackerPosition.Y)
-                {
-                    //target is to the right and above
-                    if (targetFacing == FacingInt.NorthEast)
-                        return -2;
+            // Defender's facing in game-degrees (Rotation is stored in radians using FacingInt values).
+            float defenderDeg = ((MathHelper.ToDegrees(facing) % 360) + 360) % 360;
 
-                    if (targetFacing == FacingInt.North)
-                        return -1;
-                }
-                else if (targetPosition.Y > attackerPosition.Y)
-                {
-                    //target is to the right and below
-                    if (targetFacing == FacingInt.SouthEast)
-                        return -2;
+            // Relative bearing normalised to [-180°, +180°].
+            float rel = bearingGameDeg - defenderDeg;
+            if (rel > 180)  rel -= 360;
+            if (rel < -180) rel += 360;
 
-                    if (targetFacing == FacingInt.South)
-                        return -1;
-                }
-            }
-
-            if (attackerPosition.X  - targetPosition.X > 0)
-            {
-                //target is to the left of attacker
-                if (targetPosition.Y < attackerPosition.Y)
-                {
-                    //target is to the left and above
-                    if (targetFacing == FacingInt.NorthWest)
-                        return -2;
-
-                    if (targetFacing == FacingInt.North)
-                        return -1;
-                }
-                else if (targetPosition.Y > attackerPosition.Y)
-                {
-                    //target is to the left and below
-                    if (targetFacing == FacingInt.SouthWest)
-                        return -2;
-
-                    if (targetFacing == FacingInt.South)
-                        return -1;
-                }
-            }
-
-            return 0;
+            // Classify into 90° arcs: front ±45°, flank ±45°–135°, rear ±135°–180°.
+            float absRel = Math.Abs(rel);
+            if (absRel <= 45)
+                return 0;   // front
+            if (absRel >= 135)
+                return -2;  // rear
+            return -1;      // flank
         }
         #endregion
 

@@ -45,10 +45,7 @@ namespace HeavyGear.GameLogic
         private int armyIndex = 0;
         private string name;
         private bool ready;
-        private int targetedUnitIndex;
-        private bool applyDamage;
-        private int infDamage = 0;
-        private DamageType damageToApply;
+        private List<(int unitIndex, DamageType damage, int infDamage)> pendingDamages = new List<(int, DamageType, int)>();
 
         public bool Ready
         {
@@ -162,18 +159,15 @@ namespace HeavyGear.GameLogic
                         HeavyGearManager.EndTurn();
                 }
 
-                if (applyDamage)
+                foreach (var pending in pendingDamages)
                 {
-                    applyDamage = false;
-                    if (infDamage > 0)
-                        units[targetedUnitIndex].ApplyDamage(infDamage);
+                    if (pending.infDamage > 0)
+                        units[pending.unitIndex].ApplyDamage(pending.infDamage);
                     else
-                        units[targetedUnitIndex].ApplyDamage(damageToApply);
-                    HeavyGearManager.SendTargetPacket(targetedUnitIndex);
-                    targetedUnitIndex = -1;
-                    damageToApply = DamageType.None;
-                    infDamage = 0;
+                        units[pending.unitIndex].ApplyDamage(pending.damage);
+                    HeavyGearManager.SendTargetPacket(pending.unitIndex);
                 }
+                pendingDamages.Clear();
             }
         }
         public void UpdateRemote(int framesBetweenPackets)
@@ -242,16 +236,12 @@ namespace HeavyGear.GameLogic
 
         public void ApplyDamage(int targetedUnitIndex, DamageType damage)
         {
-            applyDamage = true;
-            damageToApply = damage;
-            this.targetedUnitIndex = targetedUnitIndex;
+            pendingDamages.Add((targetedUnitIndex, damage, 0));
         }
 
         public void ApplyInfantryDamage(int targetedUnitIndex, int damage)
         {
-            infDamage = damage;
-            applyDamage = true;
-            this.targetedUnitIndex = targetedUnitIndex;
+            pendingDamages.Add((targetedUnitIndex, DamageType.None, damage));
         }
         #endregion
     }

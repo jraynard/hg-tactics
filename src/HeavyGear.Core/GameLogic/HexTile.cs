@@ -282,14 +282,6 @@ namespace HeavyGear.GameLogic
             return false;
         }
 
-        //public bool InsideArc(Arc arc)
-        //{
-        //    if (RightOfArc(arc.center, arc.clockX, arc.clockY) && LeftOfArc(arc.center, arc.counterClockX, arc.counterClockY))
-        //        return true;
-//
-        //    return false;
-       // }
-
         #endregion
     }
 }

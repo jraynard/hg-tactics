@@ -391,7 +391,7 @@ namespace HeavyGear.GameLogic
                         defenderSpeedModifer = -3;
 
                     //defense arc modifier
-                    int defenseArcModifier = CheckDefenseArc((int)target.Rotation, MapPosition, target.MapPosition);
+                    int defenseArcModifier = CheckDefenseArc(target.Rotation, MapPosition, target.MapPosition);
 
                     #region Apply Modifiers
 
@@ -421,13 +421,13 @@ namespace HeavyGear.GameLogic
 
                         if (target.ReinforcedFrontArmor > 0)
                         {
-                            if (CheckDefenseArc((int)target.Rotation, MapPosition, target.MapPosition) == 0)
+                            if (CheckDefenseArc(target.Rotation, MapPosition, target.MapPosition) == 0)
                                 effectiveArmor += target.ReinforcedFrontArmor;
                         }
 
                         if (target.WeakRearFacing)
                         {
-                            if (CheckDefenseArc((int)target.Rotation, MapPosition, target.MapPosition) > 0)
+                            if (CheckDefenseArc(target.Rotation, MapPosition, target.MapPosition) > 0)
                                 effectiveArmor /= 2;
                         }
 
@@ -576,7 +576,7 @@ namespace HeavyGear.GameLogic
                     #region Defender Modifiers
 
                     //defense arc modifier
-                    int defenseArcModifier = CheckDefenseArc((int)target.Rotation, MapPosition, target.MapPosition);
+                    int defenseArcModifier = CheckDefenseArc(target.Rotation, MapPosition, target.MapPosition);
 
                     #region Apply Modifiers
 

@@ -1389,44 +1389,6 @@ namespace HeavyGear.GameLogic
                 }
             }
 
-            /*
-            //Build arcs
-            if (hexStart == 5)
-            {
-                // build 2 arcs for north facing so that hex end is not greater than hex start
-                Vector2 arm = new Vector2();
-                arm.X = originTile.Position.X;
-                arm.Y = originTile.Position.Y - 128;
-
-                arcList = new Arc(5, leftTarget.Center.X, leftTarget.Center.Y, 5, arm.X, arm.Y, detection, originTile);
-                arcList.next = new Arc(0, arm.X, arm.Y, 1, rightTarget.Center.X, rightTarget.Center.Y, detection, originTile);
-            }
-            else
-                arcList = new Arc(hexStart, leftTarget.Center.X, leftTarget.Center.Y, hexEnd, rightTarget.Center.X, rightTarget.Center.Y, detection, originTile);
-
-            //Expand the arc
-            for (int r = 1; r < sightRange && r < height; r++)
-            {
-                NextArc(r);
-            }
-
-            //now get a list of all Hexes within the visible arcs
-            for (Arc a = arcList; a != null; a = a.next)
-            {
-
-                for (int x = 0; x < width; x++)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        HexTile tile = GetTile(x, y);
-                        if (tile.InsideArc(a))
-                        {
-                            TilesInLOS.Add(tile);
-                        }
-                    }
-                }
-            }
-            */
             #region Check Tiles for Obscurement
 
             foreach (HexTile tile in tilesToCheck)
@@ -1449,22 +1411,91 @@ namespace HeavyGear.GameLogic
 
         #region CheckLOS
         /// <summary>
-        /// Checks for LOS between two units
+        /// Checks for LOS between two units without building the full LOS area.
+        /// Directly tests range, arc membership, and obscurement for the target tile only.
         /// </summary>
-        /// <param name="unit"></param>
-        /// <param name="target"></param>
-        /// <returns></returns>
         public bool CheckLOS(Unit unit, Unit target)
         {
-            List<HexTile> tilesInLOS;
-            GetLOSArea(unit, out tilesInLOS);
-            foreach (HexTile tile in tilesInLOS)
+            Point origin = unit.MapPosition;
+            Point targetPos = target.MapPosition;
+
+            if (origin == targetPos)
+                return true;
+
+            // Sight range
+            int sightRange;
+            if (unit.UnitType != UnitType.Infantry)
+                sightRange = ((Vehicle)unit).SensorsDestroyed ? 20 : ((Vehicle)unit).SensorRange;
+            else
+                sightRange = 20;
+
+            // Bail early if out of range
+            int range = GetRange(origin, targetPos);
+            if (range > sightRange)
+                return false;
+
+            // Detection threshold
+            int detection;
+            if (unit.UnitType != UnitType.Infantry)
+                detection = ((Vehicle)unit).Crew.ElectronicWarfare.Level + ((Vehicle)unit).Sensors;
+            else
+                detection = 4;
+            if (detection < 4)
+                detection = 4;
+
+            // Determine the same arc boundaries used by GetLOSArea
+            int unitFacing = (int)Math.Round(MathHelper.ToDegrees(unit.Rotation));
+            int leftFacing = 0, rightFacing = 0;
+            switch (unitFacing)
             {
-                if (target.MapPosition == tile.MapPosition)
-                    return true;
+                case FacingInt.North:     leftFacing = FacingInt.NorthWest; rightFacing = FacingInt.NorthEast; break;
+                case FacingInt.NorthEast: leftFacing = FacingInt.North;     rightFacing = FacingInt.SouthEast; break;
+                case FacingInt.SouthEast: leftFacing = FacingInt.NorthEast; rightFacing = FacingInt.South;     break;
+                case FacingInt.South:     leftFacing = FacingInt.SouthEast; rightFacing = FacingInt.SouthWest; break;
+                case FacingInt.SouthWest: leftFacing = FacingInt.South;     rightFacing = FacingInt.NorthWest; break;
+                case FacingInt.NorthWest: leftFacing = FacingInt.SouthWest; rightFacing = FacingInt.North;     break;
+                default:                  leftFacing = FacingInt.NorthWest; rightFacing = FacingInt.NorthEast; break;
             }
 
-            return false;
+            Point leftArm  = origin;
+            Point rightArm = origin;
+            StepArmPoint(ref leftArm,  leftFacing,  leftArm.Y);
+            StepArmPoint(ref rightArm, rightFacing, rightArm.Y);
+
+            HexTile originTile  = GetTile(origin.X, origin.Y);
+            HexTile leftTarget  = GetTile(leftArm.X,  leftArm.Y)  ?? new HexTile(leftArm);
+            HexTile rightTarget = GetTile(rightArm.X, rightArm.Y) ?? new HexTile(rightArm);
+            HexTile targetTile  = GetTile(targetPos.X, targetPos.Y);
+
+            if (targetTile == null || !targetTile.InsideArc(originTile, leftTarget, rightTarget))
+                return false;
+
+            return GetObscurement(origin, targetPos) <= detection;
+        }
+        #endregion
+
+        #region StepArmPoint
+        /// <summary>
+        /// Advances a hex-grid point one step in the given facing direction.
+        /// Used when computing LOS arc boundary arms.
+        /// </summary>
+        private static void StepArmPoint(ref Point arm, int facing, int row)
+        {
+            switch (facing)
+            {
+                case FacingInt.North:                            arm.Y -= 2; break;
+                case FacingInt.NorthEast: case FacingInt.NorthWest: arm.Y -= 1; break;
+                case FacingInt.SouthEast: case FacingInt.SouthWest: arm.Y += 1; break;
+                case FacingInt.South:                            arm.Y += 2; break;
+            }
+            if (row % 2 > 0)
+            {
+                if (facing == FacingInt.NorthEast || facing == FacingInt.SouthEast) arm.X += 1;
+            }
+            else
+            {
+                if (facing == FacingInt.SouthWest || facing == FacingInt.NorthWest) arm.X -= 1;
+            }
         }
         #endregion
 

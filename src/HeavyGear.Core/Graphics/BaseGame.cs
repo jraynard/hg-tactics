@@ -340,7 +340,18 @@ namespace HeavyGear.Graphics
 #else
             graphicsManager.PreferredBackBufferWidth = resolutionWidth;
             graphicsManager.PreferredBackBufferHeight = resolutionHeight;
-            graphicsManager.IsFullScreen = GameSettings.Default.Fullscreen;
+            if (GameSettings.Default.ResolutionWidth <= 0 || GameSettings.Default.ResolutionHeight <= 0)
+            {
+                // Auto-detect: use borderless fullscreen so the window fills the desktop
+                // without a title bar eating into the render area and cutting off UI elements.
+                graphicsManager.HardwareModeSwitch = false;
+                graphicsManager.IsFullScreen = true;
+            }
+            else
+            {
+                graphicsManager.HardwareModeSwitch = true;
+                graphicsManager.IsFullScreen = GameSettings.Default.Fullscreen;
+            }
 
             mustApplyDeviceChanges = true;
 #endif

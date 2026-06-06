@@ -81,7 +81,7 @@ namespace HeavyGear.GameLogic
             }
             set
             {
-                unitsDestroyed++;
+                unitsDestroyed = value;
             }
         }
 
